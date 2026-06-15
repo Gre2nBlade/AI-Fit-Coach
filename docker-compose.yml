@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    command: python -m bot.main
+    env_file: .env
+    volumes:
+      - ./data:/app/data          # SQLite-файл живёт тут
+      - ./miniapp:/app/miniapp    # статика MiniApp
+    ports:
+      - "8000:8000"               # FastAPI
+    restart: unless-stopped
+
+# На старте — один контейнер: бот + FastAPI в одном процессе (asyncio.gather).
+# Когда понадобится масштабирование — разносим на два сервиса без изменения кода.
