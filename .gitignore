@@ -5,6 +5,7 @@ __pycache__/
 .venv/
 venv/
 env/
+design/
 
 # Env / secrets
 .env
@@ -17,6 +18,14 @@ data/
 # Logs
 logs/
 *.log
+
+# Node / Capacitor
+node_modules/
+frontend/node_modules/
+
+# Нативные проекты Capacitor (генерируются: npx cap add ...)
+frontend/android/
+frontend/ios/
 
 # IDE
 .idea/

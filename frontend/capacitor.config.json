@@ -1,0 +1,8 @@
+{
+  "appId": "com.aifitcoach.app",
+  "appName": "AI Fit Coach",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

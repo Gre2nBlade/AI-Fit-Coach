@@ -1,78 +1,101 @@
 # AI Fit Coach 🏋️
 
-Telegram-бот для персонального фитнес-коучинга с AI + MiniApp-дашборд.
+Персональный фитнес-коуч с AI: веб-приложение + бэкенд. Сайт упаковывается в
+мобильное приложение (APK для Android, позже iOS) через **Capacitor**.
 
 > ⚠️ **Черновой каркас (ветка `dev`).** Дизайна нет, бизнес-логика — заглушки.
-> Цель этого коммита: рабочая структура слоёв, по которой дальше наращивается мясо.
+> Цель: рабочая структура слоёв, по которой дальше наращивается функционал.
 
 ## Стек
 
-| Слой            | Технология                                   |
-|-----------------|----------------------------------------------|
-| Telegram-бот    | python-telegram-bot 22.x (async)             |
-| REST API        | FastAPI + uvicorn                            |
-| AI              | OpenRouter через httpx (async)               |
-| ORM             | SQLAlchemy 2.0 + aiosqlite                   |
-| Миграции        | Alembic (подключается позже)                 |
-| Конфиг          | pydantic-settings (.env)                     |
-| Планировщик     | APScheduler 3.x                              |
-| Кэш             | dict + TTL в памяти (→ Redis потом)          |
-| MiniApp         | чистый HTML/CSS/JS + Telegram WebApp SDK     |
-| Деплой          | Docker + docker-compose                      |
-
-## Архитектура (сверху вниз)
-
-```
-Клиенты:   Telegram App            Браузер в Telegram (MiniApp)
-              │                              │
-Точки      bot/handlers/  ←── один процесс ──→  api/routers/
-входа:     (python-telegram-bot)  asyncio.gather  (FastAPI)
-              │                              │
-              └──────────────┬───────────────┘
-Сервисы:              services/  (бизнес-логика, без Telegram/HTTP)
-                              │
-Репозитории:        db/repositories/  (единственное место с SQL)
-                              │
-БД:                  SQLAlchemy 2.0 async + SQLite
-```
-
-**Принцип:** и хендлеры бота, и роутеры API вызывают одни и те же сервисы —
-никакой дублированной логики.
+| Слой           | Технология                                  |
+|----------------|---------------------------------------------|
+| Бэкенд API     | FastAPI + uvicorn                           |
+| Аутентификация | email + пароль, JWT (python-jose, passlib)  |
+| AI             | OpenRouter через httpx (async)              |
+| ORM            | SQLAlchemy 2.0 + aiosqlite                  |
+| Миграции       | Alembic (подключается позже)                |
+| Конфиг         | pydantic-settings (.env)                    |
+| Планировщик    | APScheduler 3.x                             |
+| Кэш            | dict + TTL в памяти (→ Redis потом)         |
+| Фронтенд       | чистый HTML/CSS/JS                          |
+| Мобилка        | Capacitor (APK Android, потом iOS)          |
+| Деплой бэка    | Docker + docker-compose                     |
 
 ## Структура
 
 ```
-bot/        Telegram-слой (точка входа main.py, конфиг, handlers/)
-api/        FastAPI для MiniApp (app, dependencies, routers/)
-services/   Бизнес-логика (ai, user, workout, nutrition, scheduler)
-db/         base, engine, models, repositories/
-cache/      memory_cache.py (интерфейс совместим с будущим Redis)
-miniapp/    index.html + css/js (голые кнопки, без дизайна)
+backend/                 FastAPI-бэкенд
+├── main.py              точка входа (uvicorn)
+├── config.py            pydantic-settings (.env)
+├── Dockerfile
+├── requirements.txt
+├── api/
+│   ├── app.py           сборка FastAPI, CORS, lifespan (init_db + scheduler)
+│   ├── dependencies.py  get_current_user_id — проверка JWT (Bearer)
+│   └── routers/         auth, user, workout, nutrition
+├── services/            бизнес-логика (без HTTP)
+│   ├── auth_service.py  хеш паролей + JWT
+│   ├── ai_service.py    промпты + OpenRouter
+│   ├── user_service.py
+│   ├── workout_service.py
+│   ├── nutrition_service.py
+│   └── scheduler.py
+├── db/
+│   ├── base.py · engine.py · models.py
+│   └── repositories/    user_repo, workout_repo, nutrition_repo  (единственное место с SQL)
+└── cache/memory_cache.py
+
+frontend/                Веб-app → Capacitor
+├── www/                 статика (попадает в APK): index.html, css/, js/
+├── capacitor.config.json
+├── package.json
+└── README.md            как собрать APK
+
+.env.example · docker-compose.yml
 ```
 
-## Запуск (локально)
+**Принцип слоёв:** роутеры → сервисы → репозитории → БД. SQL живёт только в
+`db/repositories/`. Смена SQLite→PostgreSQL — одна строка `DATABASE_URL` в `.env`.
+
+## Запуск бэкенда (локально)
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env        # вписать BOT_TOKEN и OPENROUTER_API_KEY
-python -m bot.main          # запускает бота + FastAPI вместе
+pip install -r backend/requirements.txt
+cp .env.example .env        # вписать OPENROUTER_API_KEY и JWT_SECRET
+python -m backend.main      # FastAPI на http://localhost:8000 (Swagger: /docs)
 ```
 
-API поднимется на `http://localhost:8000` (Swagger: `/docs`).
-
-## Запуск (Docker)
+## Запуск бэкенда (Docker)
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-## Что уже есть / чего ещё нет
+## Фронтенд и сборка APK
 
-- ✅ Структура слоёв, точки входа, заглушки сервисов/репозиториев
-- ✅ HMAC-проверка `initData` в `api/dependencies.py`
-- ✅ MiniApp с кнопками, дёргающими API
-- ⬜ Реальная бизнес-логика (промпты, генерация планов, расчёт КБЖУ)
-- ⬜ Alembic-миграции, дизайн MiniApp, тесты
+См. [`frontend/README.md`](frontend/README.md). Кратко:
+
+```bash
+cd frontend
+npm install
+npx cap add android
+npx cap sync
+npx cap open android        # Android Studio → Build APK
 ```
+
+## Поток аутентификации
+
+1. Фронт шлёт `POST /api/auth/register` или `/api/auth/login` (email + пароль).
+2. Бэкенд проверяет/создаёт пользователя, возвращает **JWT**.
+3. Фронт хранит токен в `localStorage`, шлёт его в `Authorization: Bearer <token>`.
+4. `get_current_user_id` декодирует токен → `user_id` → роутер → сервис → репозиторий.
+
+## Что есть / чего ещё нет
+
+- ✅ Структура слоёв, JWT-авторизация, точки входа, заглушки сервисов
+- ✅ Веб-app с кнопками + конфиг Capacitor под APK
+- ⬜ Реальная бизнес-логика (промпты, генерация планов, расчёт КБЖУ)
+- ⬜ Alembic-миграции, дизайн, тесты, нативная сборка APK

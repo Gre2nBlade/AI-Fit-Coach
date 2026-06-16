@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AI Fit Coach (черновик)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <h1>AI Fit Coach</h1>
+  <p class="note">Черновой веб-app. Дизайна нет — только кнопки. Под упаковку в APK (Capacitor).</p>
+
+  <!-- ===== Экран авторизации ===== -->
+  <section id="auth-screen">
+    <h2>Вход / Регистрация</h2>
+    <input id="inp-email" type="email" placeholder="email" autocomplete="username">
+    <input id="inp-password" type="password" placeholder="пароль" autocomplete="current-password">
+    <input id="inp-name" type="text" placeholder="имя (только для регистрации)">
+    <button id="btn-login">Войти</button>
+    <button id="btn-register">Зарегистрироваться</button>
+    <p id="out-auth" class="msg"></p>
+  </section>
+
+  <!-- ===== Дашборд (виден после входа) ===== -->
+  <section id="dash-screen" hidden>
+    <h2>Профиль</h2>
+    <button id="btn-me">Загрузить профиль</button>
+    <button id="btn-logout">Выйти</button>
+    <pre id="out-me"></pre>
+
+    <h2>Тренировки</h2>
+    <button id="btn-plans">Мои планы</button>
+    <button id="btn-generate">Сгенерировать план</button>
+    <pre id="out-workout"></pre>
+
+    <h2>Питание</h2>
+    <button id="btn-diary">Дневник</button>
+    <pre id="out-nutrition"></pre>
+  </section>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

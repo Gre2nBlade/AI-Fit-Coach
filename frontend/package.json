@@ -1,0 +1,22 @@
+{
+  "name": "ai-fit-coach-frontend",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Веб-app AI Fit Coach + упаковка в APK/iOS через Capacitor (черновик)",
+  "scripts": {
+    "cap:sync": "cap sync",
+    "android:add": "cap add android",
+    "android:open": "cap open android",
+    "android:build": "cap sync android && cap open android",
+    "ios:add": "cap add ios",
+    "ios:open": "cap open ios"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.1.0",
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/ios": "^6.1.0"
+  }
+}

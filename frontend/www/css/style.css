@@ -1,0 +1,32 @@
+/* Черновик — без дизайна, только минимальная читаемость. */
+body {
+  font-family: sans-serif;
+  margin: 16px;
+  max-width: 520px;
+}
+
+section {
+  margin: 16px 0;
+  padding: 8px 0;
+  border-top: 1px solid #ccc;
+}
+
+input, button {
+  display: block;
+  margin: 6px 0;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+pre {
+  background: #f0f0f0;
+  padding: 8px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.note {
+  color: #888;
+  font-size: 0.9em;
+}
