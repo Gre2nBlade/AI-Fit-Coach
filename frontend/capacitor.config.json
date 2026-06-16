@@ -3,6 +3,7 @@
   "appName": "AI Fit Coach",
   "webDir": "www",
   "server": {
-    "androidScheme": "https"
+    "androidScheme": "http",
+    "cleartext": true
   }
 }

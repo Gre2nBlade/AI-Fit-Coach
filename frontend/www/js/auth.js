@@ -1,60 +1,88 @@
-// Регистрация / вход / выход. Управляет переключением экранов.
+// Экран входа / регистрации. После успеха — редирект по состоянию профиля.
 
-function showDashboard() {
-  document.getElementById("auth-screen").hidden = true;
-  document.getElementById("dash-screen").hidden = false;
+let mode = "login"; // login | register
+
+const titleEl = document.getElementById("auth-title");
+const nameField = document.getElementById("name-field");
+const submitBtn = document.getElementById("a-submit");
+const switchBtn = document.getElementById("a-switch");
+const msgEl = document.getElementById("auth-msg");
+
+// Уже авторизован → не показываем экран входа
+if (isAuthed()) {
+  routeAfterAuth();
 }
 
-function showAuth() {
-  document.getElementById("auth-screen").hidden = false;
-  document.getElementById("dash-screen").hidden = true;
-}
-
-function setAuthMessage(text, isError) {
-  const el = document.getElementById("out-auth");
-  el.textContent = text;
-  el.style.color = isError ? "#c00" : "#080";
-}
-
-// FastAPI кладёт текст ошибки в res.detail (строка или список) — достаём читаемо.
-function errorText(res) {
-  if (!res || res.detail == null) return "Что-то пошло не так.";
-  if (typeof res.detail === "string") return res.detail;
-  return res.detail.map((e) => e.msg).join(", ");
-}
-
-async function doRegister() {
-  const body = {
-    email: document.getElementById("inp-email").value,
-    password: document.getElementById("inp-password").value,
-    full_name: document.getElementById("inp-name").value || null,
-  };
-  const res = await apiPost("/api/auth/register", body);
-  if (res.token) {
-    setToken(res.token);
-    setAuthMessage("Регистрация прошла успешно.", false);
-    showDashboard();
+function setMode(m) {
+  mode = m;
+  if (m === "register") {
+    titleEl.textContent = "Создать аккаунт";
+    nameField.hidden = false;
+    submitBtn.textContent = "Зарегистрироваться";
+    switchBtn.textContent = "Уже есть аккаунт? Войти";
   } else {
-    setAuthMessage(errorText(res), true);
+    titleEl.textContent = "Вход в аккаунт";
+    nameField.hidden = true;
+    submitBtn.textContent = "Войти";
+    switchBtn.textContent = "Нет аккаунта? Регистрация";
+  }
+  setMsg("");
+}
+
+function setMsg(text, isError) {
+  msgEl.textContent = text;
+  msgEl.style.color = isError ? "#e3596a" : "#41d18f";
+}
+
+switchBtn.addEventListener("click", () => setMode(mode === "login" ? "register" : "login"));
+
+submitBtn.addEventListener("click", submit);
+document.getElementById("a-password").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") submit();
+});
+
+async function submit() {
+  const email = document.getElementById("a-email").value.trim();
+  const password = document.getElementById("a-password").value;
+  const name = document.getElementById("a-name").value.trim();
+
+  if (!email || !password) {
+    setMsg("Введите email и пароль.", true);
+    return;
+  }
+  if (mode === "register" && password.length < 6) {
+    setMsg("Пароль слишком короткий: минимум 6 символов.", true);
+    return;
+  }
+
+  submitBtn.disabled = true;
+  const path = mode === "register" ? "/api/auth/register" : "/api/auth/login";
+  const body = mode === "register"
+    ? { email, password, full_name: name || null }
+    : { email, password };
+
+  const res = await apiPost(path, body);
+  submitBtn.disabled = false;
+
+  if (res.ok && res.data && res.data.token) {
+    setToken(res.data.token);
+    setMsg("Готово!", false);
+    routeAfterAuth();
+  } else {
+    setMsg(errorText(res.data, "Не удалось войти."), true);
   }
 }
 
-async function doLogin() {
-  const body = {
-    email: document.getElementById("inp-email").value,
-    password: document.getElementById("inp-password").value,
-  };
-  const res = await apiPost("/api/auth/login", body);
-  if (res.token) {
-    setToken(res.token);
-    setAuthMessage("Вход выполнен.", false);
-    showDashboard();
+// Куда отправить после входа: не прошёл онбординг → onboarding, иначе → app.
+async function routeAfterAuth() {
+  const res = await apiGet("/api/user/me");
+  if (res.ok && res.data) {
+    window.location.href = res.data.onboarded ? "app.html" : "onboarding.html";
+  } else if (res.status === 401) {
+    clearToken();
+    // остаёмся на странице входа
   } else {
-    setAuthMessage(errorText(res), true);
+    // сервер недоступен — пусть попробует онбординг локально
+    window.location.href = "onboarding.html";
   }
-}
-
-function doLogout() {
-  clearToken();
-  showAuth();
 }

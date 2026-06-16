@@ -20,6 +20,13 @@ class User(Base):
     age: Mapped[int | None] = mapped_column(Integer, nullable=True)
     height_cm: Mapped[float | None] = mapped_column(Float, nullable=True)
     weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    goal_weight_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+    goal: Mapped[str | None] = mapped_column(String(32), nullable=True)       # Похудение/Набор массы/Баланс формы
+    level: Mapped[str | None] = mapped_column(String(32), nullable=True)      # Начальный/Средний/Продвинутый
+    place: Mapped[str | None] = mapped_column(String(32), nullable=True)      # Дома/В зале/На улице
+    training_days: Mapped[str | None] = mapped_column(String(64), nullable=True)  # "ПН,СР,ПТ"
+    avatar: Mapped[str | None] = mapped_column(String, nullable=True)         # data URL (base64), черновик
+    onboarded: Mapped[int] = mapped_column(Integer, default=0)               # 0/1 — пройден ли онбординг
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     goals: Mapped[list["UserGoal"]] = relationship(back_populates="user")

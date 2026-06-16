@@ -3,43 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>AI Fit Coach (черновик)</title>
+  <title>AI Fit Coach — Вход</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <h1>AI Fit Coach</h1>
-  <p class="note">Черновой веб-app. Дизайна нет — только кнопки. Под упаковку в APK (Capacitor).</p>
+  <div class="onb">
+    <div class="onb-card" style="max-width: 460px;">
+      <div class="logo onb-logo">
+        <svg class="logo-mark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+        <div class="logo-text"><span class="ai">AI</span> FIT COACH</div>
+      </div>
+      <p class="onb-sub" id="auth-title">Вход в аккаунт</p>
 
-  <!-- ===== Экран авторизации ===== -->
-  <section id="auth-screen">
-    <h2>Вход / Регистрация</h2>
-    <input id="inp-email" type="email" placeholder="email" autocomplete="username">
-    <input id="inp-password" type="password" placeholder="пароль" autocomplete="current-password">
-    <input id="inp-name" type="text" placeholder="имя (только для регистрации)">
-    <button id="btn-login">Войти</button>
-    <button id="btn-register">Зарегистрироваться</button>
-    <p id="out-auth" class="msg"></p>
-  </section>
+      <div style="display:flex;flex-direction:column;gap:16px;text-align:left;">
+        <div class="field" id="name-field" hidden>
+          <label>Имя</label>
+          <input class="input" id="a-name" placeholder="Например: Максим">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input class="input" id="a-email" type="email" placeholder="you@example.com" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>Пароль</label>
+          <input class="input" id="a-password" type="password" placeholder="минимум 6 символов" autocomplete="current-password">
+        </div>
+      </div>
 
-  <!-- ===== Дашборд (виден после входа) ===== -->
-  <section id="dash-screen" hidden>
-    <h2>Профиль</h2>
-    <button id="btn-me">Загрузить профиль</button>
-    <button id="btn-logout">Выйти</button>
-    <pre id="out-me"></pre>
+      <p id="auth-msg" class="msg" style="min-height:20px;margin:16px 0 0;"></p>
 
-    <h2>Тренировки</h2>
-    <button id="btn-plans">Мои планы</button>
-    <button id="btn-generate">Сгенерировать план</button>
-    <pre id="out-workout"></pre>
+      <div style="margin-top:14px;display:flex;flex-direction:column;gap:12px;">
+        <button class="btn" id="a-submit">Войти</button>
+        <button class="btn btn-ghost" id="a-switch">Нет аккаунта? Регистрация</button>
+      </div>
+    </div>
+  </div>
 
-    <h2>Питание</h2>
-    <button id="btn-diary">Дневник</button>
-    <pre id="out-nutrition"></pre>
-  </section>
-
+  <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/app.js"></script>
 </body>
 </html>

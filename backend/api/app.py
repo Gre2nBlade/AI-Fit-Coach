@@ -12,7 +12,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.api.routers import auth, nutrition, user, workout
+from backend.api.routers import ai, auth, nutrition, user, workout
 from backend.config import settings
 from backend.db.engine import init_db
 from backend.logging_config import setup_logging
@@ -41,6 +41,7 @@ app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(workout.router)
 app.include_router(nutrition.router)
+app.include_router(ai.router)
 
 
 @app.exception_handler(RequestValidationError)

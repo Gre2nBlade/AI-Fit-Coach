@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AI Fit Coach — Онбординг</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Левый степ-индикатор -->
+  <div class="step-rail" id="step-rail">
+    <div class="seg"></div>
+    <div class="seg"></div>
+    <div class="seg"></div>
+    <div class="seg"></div>
+    <div class="seg"></div>
+  </div>
+
+  <div class="onb">
+    <div class="onb-card">
+
+      <!-- ШАГ 1 — имя / возраст / пол -->
+      <section class="onb-step active" data-step="0">
+        <div class="logo onb-logo">
+          <svg class="logo-mark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+          <div class="logo-text"><span class="ai">AI</span> FIT COACH</div>
+        </div>
+        <p class="onb-sub">Персональный AI тренер, который создаёт план под тебя</p>
+        <div class="onb-fields">
+          <div class="field">
+            <label>Твоё имя</label>
+            <input class="input" id="f-name" placeholder="Например: Максим">
+          </div>
+          <div class="field">
+            <label>Возраст</label>
+            <input class="input" id="f-age" type="number" min="10" max="100" placeholder="25">
+          </div>
+          <div class="field">
+            <label>Пол</label>
+            <select class="select" id="f-sex">
+              <option value="" disabled selected>Выбрать</option>
+              <option value="Мужской">Мужской</option>
+              <option value="Женский">Женский</option>
+            </select>
+          </div>
+        </div>
+        <p class="step-err msg"></p>
+        <div class="onb-actions"><button class="btn" data-next>Продолжить</button></div>
+      </section>
+
+      <!-- ШАГ 2 — рост / вес / желаемый вес -->
+      <section class="onb-step" data-step="1">
+        <div class="logo onb-logo">
+          <svg class="logo-mark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+          <div class="logo-text"><span class="ai">AI</span> FIT COACH</div>
+        </div>
+        <div class="onb-fields">
+          <div class="field">
+            <label>Рост (см)</label>
+            <input class="input" id="f-height" type="number" min="100" max="250" placeholder="175">
+          </div>
+          <div class="field">
+            <label>Вес (кг)</label>
+            <input class="input" id="f-weight" type="number" min="30" max="300" placeholder="70">
+          </div>
+          <div class="field">
+            <label>Желаемый вес (кг)</label>
+            <input class="input" id="f-goalweight" type="number" min="30" max="300" placeholder="65">
+          </div>
+        </div>
+        <p class="step-err msg"></p>
+        <div class="onb-actions" style="gap:14px;">
+          <button class="btn btn-ghost" data-back>Назад</button>
+          <button class="btn" data-next>Продолжить</button>
+        </div>
+      </section>
+
+      <!-- ШАГ 3 — цель -->
+      <section class="onb-step" data-step="2">
+        <div class="logo onb-logo">
+          <svg class="logo-mark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+          <div class="logo-text"><span class="ai">AI</span> FIT COACH</div>
+        </div>
+        <div class="goal-head">ТВОЯ <span class="accent">ЦЕЛЬ:</span></div>
+        <div class="goal-grid" id="goal-grid">
+          <div class="goal-card" data-goal="Похудение"><div class="thumb">🔥</div><div class="goal-label">Похудение</div></div>
+          <div class="goal-card" data-goal="Набор массы"><div class="thumb">💪</div><div class="goal-label">Набор массы</div></div>
+          <div class="goal-card" data-goal="Баланс формы"><div class="thumb">⚖️</div><div class="goal-label">Баланс формы</div></div>
+        </div>
+        <p class="step-err msg"></p>
+        <div class="onb-actions" style="gap:14px;">
+          <button class="btn btn-ghost" data-back>Назад</button>
+          <button class="btn" data-next>Продолжить</button>
+        </div>
+      </section>
+
+      <!-- ШАГ 4 — уровень / место / дни -->
+      <section class="onb-step" data-step="3">
+        <div class="logo onb-logo">
+          <svg class="logo-mark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+          <div class="logo-text"><span class="ai">AI</span> FIT COACH</div>
+        </div>
+        <div class="onb-fields" style="grid-template-columns: repeat(2, 1fr); max-width: 740px; margin: 0 auto 36px;">
+          <div class="field">
+            <label>Уровень подготовки</label>
+            <select class="select" id="f-level">
+              <option value="" disabled selected>Выбрать</option>
+              <option>Начальный</option>
+              <option>Средний</option>
+              <option>Продвинутый</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Где тренируешься?</label>
+            <select class="select" id="f-place">
+              <option value="" disabled selected>Выбрать</option>
+              <option>Дома</option>
+              <option>В зале</option>
+              <option>На улице</option>
+            </select>
+          </div>
+        </div>
+        <div style="text-align:left; max-width: 740px; margin: 0 auto 30px;">
+          <label style="font-size:17px;font-weight:600;display:block;margin-bottom:14px;">Дни тренировок</label>
+          <div class="days-row" id="days-row">
+            <button class="day" data-day="ПН">ПН</button>
+            <button class="day" data-day="ВТ">ВТ</button>
+            <button class="day" data-day="СР">СР</button>
+            <button class="day" data-day="ЧТ">ЧТ</button>
+            <button class="day" data-day="ПТ">ПТ</button>
+            <button class="day" data-day="СБ">СБ</button>
+            <button class="day" data-day="ВС">ВС</button>
+          </div>
+        </div>
+        <p class="step-err msg"></p>
+        <div class="onb-actions right" style="gap:14px;">
+          <button class="btn btn-ghost" data-back>Назад</button>
+          <button class="btn" data-next>Завершить</button>
+        </div>
+      </section>
+
+      <!-- ШАГ 5 — профиль создан + расчёты -->
+      <section class="onb-step" data-step="4">
+        <div class="logo onb-logo">
+          <svg class="logo-mark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+          <div class="logo-text"><span class="ai">AI</span> FIT COACH</div>
+        </div>
+        <div class="title-xl">ПРОФИЛЬ <span class="accent">СОЗДАН</span></div>
+        <p class="onb-sub">ИИ проанализировал данные и рассчитал твою программу</p>
+        <div class="summary-row">
+          <div class="summary-card" id="summary-card"></div>
+          <div class="summary-card" id="metrics-card" style="min-width:300px;"></div>
+        </div>
+        <p class="step-err msg" id="save-msg"></p>
+        <div class="onb-actions" style="margin-top:30px;">
+          <button class="btn" id="btn-start">Начать тренировки</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/calc.js"></script>
+  <script src="js/onboarding.js"></script>
+</body>
+</html>
