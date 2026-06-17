@@ -1,8 +1,34 @@
-"""Сервис питания: расчёт КБЖУ и ведение дневника."""
+"""Сервис питания: расчёт КБЖУ, ИИ-план питания и ведение дневника."""
 from __future__ import annotations
 
+import json
+
 from backend.db.engine import async_session_factory
-from backend.db.repositories import nutrition_repo
+from backend.db.repositories import ai_plan_repo, nutrition_repo
+from backend.services import ai_service, user_service
+
+_KIND = "nutrition"
+
+
+async def get_plan(user_id: int, force: bool = False) -> dict | None:
+    """Вернуть кэшированный план питания; при отсутствии (или force) — сгенерировать."""
+    profile = await user_service.get_profile(user_id)
+    if profile is None:
+        return None
+
+    if not force:
+        async with async_session_factory() as session:
+            cached = await ai_plan_repo.get(session, user_id, _KIND)
+            if cached is not None:
+                try:
+                    return json.loads(cached.data_json)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+    plan = await ai_service.generate_nutrition_plan(profile)
+    async with async_session_factory() as session:
+        await ai_plan_repo.upsert(session, user_id, _KIND, json.dumps(plan, ensure_ascii=False))
+    return plan
 
 
 async def add_food(user_id: int, name: str, calories: float | None = None,

@@ -3,7 +3,17 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.db.base import Base
@@ -116,3 +126,45 @@ class DailyNutrition(Base):
     total_protein: Mapped[float] = mapped_column(Float, default=0.0)
     total_fat: Mapped[float] = mapped_column(Float, default=0.0)
     total_carbs: Mapped[float] = mapped_column(Float, default=0.0)
+
+
+class AiPlan(Base):
+    """Кэш сгенерированного ИИ плана (тренировки/питание) в виде JSON-строки.
+
+    На пользователя — по одной актуальной записи каждого вида (kind).
+    Перегенерация заменяет data_json существующей записи.
+    """
+
+    __tablename__ = "ai_plans"
+    __table_args__ = (UniqueConstraint("user_id", "kind", name="uq_aiplan_user_kind"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(16))            # workout | nutrition
+    data_json: Mapped[str] = mapped_column(Text)             # структура плана (JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class DailyCheckin(Base):
+    """Ежедневная отметка пользователя: питание/тренировка/всё выполнено.
+
+    Источник реального прогресса. Уникальна по (user_id, day) — одна запись на день.
+    Флаги хранятся как 0/1 (Integer) — единообразно с User.onboarded.
+    """
+
+    __tablename__ = "daily_checkins"
+    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_checkin_user_day"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    day: Mapped[date] = mapped_column(Date, index=True)
+    ate_well: Mapped[int] = mapped_column(Integer, default=0)     # питался правильно
+    trained: Mapped[int] = mapped_column(Integer, default=0)      # тренировался
+    all_done: Mapped[int] = mapped_column(Integer, default=0)     # выполнил всё
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )

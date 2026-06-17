@@ -45,7 +45,6 @@
             <h1 class="page-title">Привет <span id="hello-name">Максим</span></h1>
             <div class="page-sub">Твоя персональная программа готова</div>
           </div>
-          <div class="avatar top">М</div>
         </div>
 
         <div class="banner">
@@ -53,28 +52,24 @@
             <p>ИИ проанализировал твои данные и создал тебе персональную программу тренировок</p>
             <button class="btn" data-goto="workout">Начать</button>
           </div>
-          <div class="icon">🎒</div>
+          <div class="icon"><span class="micon">backpack</span></div>
         </div>
 
         <div class="grid-3" style="margin-bottom:24px;">
-          <div class="stat-tile"><div class="ico">🔥</div><div class="big" id="m-calories">— ккал</div><div class="lbl">Норма калорий</div></div>
-          <div class="stat-tile"><div class="ico">📈</div><div class="big" id="m-bmi">—</div><div class="lbl" id="m-bmi-lbl">ИМТ</div></div>
-          <div class="stat-tile"><div class="ico">💧</div><div class="big" id="m-water">— л</div><div class="lbl">Норма воды</div></div>
+          <div class="stat-tile"><div class="ico"><span class="micon">local_fire_department</span></div><div class="big" id="m-calories">— ккал</div><div class="lbl">Норма калорий</div></div>
+          <div class="stat-tile"><div class="ico"><span class="micon">monitoring</span></div><div class="big" id="m-bmi">—</div><div class="lbl" id="m-bmi-lbl">ИМТ</div></div>
+          <div class="stat-tile"><div class="ico"><span class="micon">water_drop</span></div><div class="big" id="m-water">— л</div><div class="lbl">Норма воды</div></div>
         </div>
 
         <div class="grid-2">
           <div class="panel">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-              <h3>Грудь и трицепс</h3>
+              <h3 id="home-workout-title">Тренировка дня</h3>
               <span class="chip active">Сегодня</span>
             </div>
-            <div class="page-sub" style="font-size:14px;margin:0 0 18px;">55 минут · 380 калорий · 5 упражнений</div>
-            <div class="ex-list">
-              <div class="ex-row"><div class="num">1</div><div class="info"><div class="nm">Жим штанги</div><div class="meta">4x10 · Отдых 2 минуты</div></div></div>
-              <div class="ex-row"><div class="num">2</div><div class="info"><div class="nm">Разводка гантелей</div><div class="meta">3x12 · Отдых 1 минута</div></div></div>
-              <div class="ex-row"><div class="num">3</div><div class="info"><div class="nm">Отжимания на брусьях</div><div class="meta">3x15 · Отдых 1 минута</div></div></div>
-              <div class="ex-row"><div class="num">4</div><div class="info"><div class="nm">Французский жим</div><div class="meta">3x12 · Отдых 1 минута</div></div></div>
-              <div class="ex-row"><div class="num">5</div><div class="info"><div class="nm">Жим узким хватом</div><div class="meta">3x10 · Отдых 3 минуты</div></div></div>
+            <div class="page-sub" id="home-workout-meta" style="font-size:14px;margin:0 0 18px;">—</div>
+            <div class="ex-list" id="home-workout-list">
+              <div class="page-sub">Загружаю программу от ИИ…</div>
             </div>
           </div>
 
@@ -100,43 +95,18 @@
             <h1 class="page-title">Тренировки</h1>
             <div class="page-sub">Программа от ии для тебя!</div>
           </div>
-          <div class="avatar top">М</div>
         </div>
 
-        <div class="tabs">
-          <button class="chip active">Грудь</button>
-          <button class="chip">Спина</button>
-          <button class="chip">Ноги</button>
-          <button class="chip">Руки</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+          <div class="tabs" id="workout-tabs" style="margin-bottom:0;"></div>
+          <button class="btn btn-ghost" id="btn-regen-workout" style="padding:10px 18px;font-size:14px;">
+            <span class="micon" style="font-size:18px;margin-right:6px;">autorenew</span>Обновить план
+          </button>
         </div>
 
-        <div class="grid-2">
+        <div class="grid-2" id="workout-content">
           <div class="panel">
-            <div class="page-sub" style="font-size:13px;letter-spacing:1px;margin:0 0 6px;">ДЕНЬ 1 · ПОНЕДЕЛЬНИК</div>
-            <h3 style="font-size:26px;">Грудь и трицепс</h3>
-            <div class="page-sub" style="font-size:14px;margin:6px 0 20px;">55 минут · 380 калорий · 5 упражнений</div>
-            <div class="ex-list">
-              <div class="ex-row"><div class="num">1</div><div class="info"><div class="nm">Жим штанги</div><div class="meta">4x10 · Отдых 2 минуты</div></div><div class="diff easy">Легко</div></div>
-              <div class="ex-row"><div class="num">2</div><div class="info"><div class="nm">Разводка гантелей</div><div class="meta">3x12 · Отдых 1 минута</div></div><div class="diff easy">Легко</div></div>
-              <div class="ex-row"><div class="num">3</div><div class="info"><div class="nm">Отжимания на брусьях</div><div class="meta">3x15 · Отдых 1 минута</div></div><div class="diff medium">Среднее</div></div>
-              <div class="ex-row"><div class="num">4</div><div class="info"><div class="nm">Французский жим</div><div class="meta">3x12 · Отдых 1 минута</div></div><div class="diff medium">Среднее</div></div>
-              <div class="ex-row"><div class="num">5</div><div class="info"><div class="nm">Жим узким хватом</div><div class="meta">3x10 · Отдых 3 минуты</div></div><div class="diff hard">Тяжёлое</div></div>
-            </div>
-          </div>
-
-          <div class="stack">
-            <div class="panel">
-              <h3>Статистика</h3>
-              <div class="grid-3">
-                <div class="stat-num"><div class="big">55</div><div class="lbl">Минут</div></div>
-                <div class="stat-num"><div class="big">380</div><div class="lbl">Каллорий</div></div>
-                <div class="stat-num"><div class="big">5</div><div class="lbl">Упр</div></div>
-              </div>
-            </div>
-            <div class="panel">
-              <h3>Совет от ии</h3>
-              <p class="page-sub" style="font-size:15px;margin:0;">Увеличь вес на жиме на 5% — последние 2 недели ты уверенно выполняешь все повторения!</p>
-            </div>
+            <div class="ex-list"><div class="page-sub">Загружаю программу от ИИ…</div></div>
           </div>
         </div>
       </section>
@@ -148,7 +118,6 @@
             <h1 class="page-title">Питание</h1>
             <div class="page-sub">Рацион питания для достижения твоей цели!</div>
           </div>
-          <div class="avatar top">М</div>
         </div>
 
         <div class="tabs"><button class="chip active">Сегодня</button></div>
@@ -173,11 +142,15 @@
           </div>
 
           <div class="panel">
-            <h3>Приём пищи от ИИ</h3>
-            <div class="meal"><div class="ico">🥣</div><div class="info"><div class="nm">Завтрак</div><div class="desc">Овсянка, яйца и банан</div></div><div class="kcal">480 ккал</div></div>
-            <div class="meal"><div class="ico">🍛</div><div class="info"><div class="nm">Обед</div><div class="desc">Курица, рис и овощи</div></div><div class="kcal">620 ккал</div></div>
-            <div class="meal"><div class="ico">🥛</div><div class="info"><div class="nm">Перекус</div><div class="desc">Творог</div></div><div class="kcal">220 ккал</div></div>
-            <div class="meal"><div class="ico">🍽️</div><div class="info"><div class="nm">Ужин</div><div class="desc">Рыба, картофель и салатик</div></div><div class="kcal">460 ккал</div></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap;">
+              <h3 style="margin-bottom:0;">Приём пищи от ИИ</h3>
+              <button class="btn btn-ghost" id="btn-regen-nutrition" style="padding:8px 14px;font-size:13px;">
+                <span class="micon" style="font-size:16px;margin-right:6px;">autorenew</span>Обновить
+              </button>
+            </div>
+            <div id="nutrition-meals">
+              <div class="page-sub">Загружаю план питания от ИИ…</div>
+            </div>
           </div>
         </div>
       </section>
@@ -189,36 +162,32 @@
             <h1 class="page-title">Прогресс</h1>
             <div class="page-sub">Твои результаты и достижения</div>
           </div>
-          <div class="avatar top">М</div>
         </div>
 
-        <div class="tabs">
-          <button class="chip active">Статистика</button>
-          <button class="chip">План питания</button>
+        <div class="panel" style="margin-bottom:24px;">
+          <h3>Отметка дня</h3>
+          <div class="page-sub" style="font-size:14px;margin:-8px 0 8px;">Отмечай каждый день — из этого считается прогресс</div>
+          <div class="setting"><span>Питался правильно</span><div class="toggle" data-checkin="ate_well"></div></div>
+          <div class="setting"><span>Тренировался</span><div class="toggle" data-checkin="trained"></div></div>
+          <div class="setting"><span>Выполнил всё</span><div class="toggle" data-checkin="all_done"></div></div>
         </div>
 
         <div class="panel" style="margin-bottom:24px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
-            <h3>Тренировки этого месяца</h3>
-            <span class="chip">Июнь</span>
+            <h3>Тренировки этой недели</h3>
+            <span class="chip" id="progress-streak">Серия: 0</span>
           </div>
-          <div class="bars">
-            <div class="bar-col"><div class="bar" style="height:85%"></div><div class="lbl">Пн</div></div>
-            <div class="bar-col"><div class="bar empty" style="height:18%"></div><div class="lbl">Вт</div></div>
-            <div class="bar-col"><div class="bar" style="height:80%"></div><div class="lbl">Ср</div></div>
-            <div class="bar-col"><div class="bar" style="height:55%"></div><div class="lbl">Чт</div></div>
-            <div class="bar-col"><div class="bar empty" style="height:18%"></div><div class="lbl">Пт</div></div>
-            <div class="bar-col"><div class="bar empty" style="height:18%"></div><div class="lbl">Сб</div></div>
-            <div class="bar-col"><div class="bar empty" style="height:18%"></div><div class="lbl">Вс</div></div>
+          <div class="bars" id="progress-bars">
+            <div class="page-sub">Загрузка…</div>
           </div>
         </div>
 
         <div class="panel">
           <h3>Общая статистика</h3>
           <div class="grid-3">
-            <div class="stat-tile" style="text-align:center;"><div class="big" style="color:var(--accent)">13</div><div class="lbl">Тренировок</div></div>
-            <div class="stat-tile" style="text-align:center;"><div class="big" style="color:var(--accent)">12ч</div><div class="lbl">Общее время</div></div>
-            <div class="stat-tile" style="text-align:center;"><div class="big" style="color:var(--accent)">4940</div><div class="lbl">Ккал сожжено</div></div>
+            <div class="stat-tile" style="text-align:center;"><div class="big" style="color:var(--accent)" id="st-workouts">0</div><div class="lbl">Тренировок в месяце</div></div>
+            <div class="stat-tile" style="text-align:center;"><div class="big" style="color:var(--accent)" id="st-completion">0%</div><div class="lbl">Выполнение плана</div></div>
+            <div class="stat-tile" style="text-align:center;"><div class="big" style="color:var(--accent)" id="st-streak">0</div><div class="lbl">Серия дней</div></div>
           </div>
         </div>
       </section>
@@ -230,7 +199,6 @@
             <h1 class="page-title">ИИ Тренер</h1>
             <div class="page-sub">Задай любой вопрос о тренировках и питании</div>
           </div>
-          <div class="avatar top">М</div>
         </div>
 
         <div class="panel chat">
@@ -260,9 +228,15 @@
             <button class="chip">Сколько нужно спать?</button>
           </div>
 
+          <div id="chat-image-preview" class="chat-image-preview" hidden>
+            <img id="chat-image-thumb" alt="фото">
+            <button id="chat-image-remove" title="Убрать фото"><span class="micon">close</span></button>
+          </div>
           <div class="chat-input">
-            <input class="input" id="chat-text" placeholder="Напиши любой вопрос ии тренеру">
-            <button class="chat-send" id="chat-send">➤</button>
+            <input type="file" id="chat-image-input" accept="image/*" hidden>
+            <button class="chat-attach" id="chat-attach" title="Прикрепить фото"><span class="micon">add_a_photo</span></button>
+            <input class="input" id="chat-text" placeholder="Спроси или пришли фото еды — подойдёт ли?">
+            <button class="chat-send" id="chat-send"><span class="micon">send</span></button>
           </div>
         </div>
       </section>
@@ -295,6 +269,7 @@
               <div class="setting"><span>Уведомления</span><div class="toggle on" data-toggle></div></div>
               <div class="setting"><span>Советы ИИ</span><div class="toggle on" data-toggle></div></div>
               <div class="setting"><span>Таймер и сигналы</span><div class="toggle" data-toggle></div></div>
+              <button class="btn btn-ghost" id="btn-logout-2" style="width:100%;margin-top:18px;color:var(--hard);border-color:var(--hard);">Выйти из аккаунта</button>
             </div>
           </div>
 
@@ -316,6 +291,16 @@
       </section>
 
     </main>
+
+    <!-- ===== Нижняя панель вкладок (только телефон) ===== -->
+    <nav class="tabbar" id="tabbar">
+      <button class="tab-item active" data-view="home"><span class="micon">home</span><span class="t">Главная</span></button>
+      <button class="tab-item" data-view="workout"><span class="micon">fitness_center</span><span class="t">Трен.</span></button>
+      <button class="tab-item" data-view="nutrition"><span class="micon">restaurant</span><span class="t">Питание</span></button>
+      <button class="tab-item" data-view="progress"><span class="micon">monitoring</span><span class="t">Прогресс</span></button>
+      <button class="tab-item" data-view="ai"><span class="micon">smart_toy</span><span class="t">ИИ</span></button>
+      <button class="tab-item" data-view="profile"><span class="micon">person</span><span class="t">Профиль</span></button>
+    </nav>
   </div>
 
   <script src="js/config.js"></script>

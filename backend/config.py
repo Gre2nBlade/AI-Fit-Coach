@@ -10,7 +10,10 @@ class Settings(BaseSettings):
     # AI / OpenRouter
     openrouter_api_key: str = "PUT_KEY_HERE"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    ai_model: str = "anthropic/claude-3.5-sonnet"
+    # Основная модель — текстовые ответы, генерация планов.
+    ai_model: str = "openai/gpt-oss-120b:free"
+    # Vision-модель — анализ фото в чате (еда, упражнения). Поддерживает изображения.
+    ai_vision_model: str = "google/gemma-4-26b-a4b-it:free"
 
     # БД
     database_url: str = "sqlite+aiosqlite:///./data/app.db"

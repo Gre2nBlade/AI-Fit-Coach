@@ -1,28 +1,35 @@
-"""Сервис тренировок: генерация планов (через ai_service) и запись прогресса."""
+"""Сервис тренировок: генерация структурированных планов (через ai_service),
+кэширование в AiPlan и запись прогресса."""
 from __future__ import annotations
 
+import json
+
 from backend.db.engine import async_session_factory
-from backend.db.repositories import user_repo, workout_repo
-from backend.services import ai_service
+from backend.db.repositories import ai_plan_repo, workout_repo
+from backend.services import ai_service, user_service
+
+_KIND = "workout"
 
 
-async def create_plan_for(user_id: int) -> dict | None:
-    """Сгенерировать план тренировок через AI и сохранить его."""
+async def get_plan(user_id: int, force: bool = False) -> dict | None:
+    """Вернуть кэшированный план тренировок; при отсутствии (или force) — сгенерировать."""
+    profile = await user_service.get_profile(user_id)
+    if profile is None:
+        return None
+
+    if not force:
+        async with async_session_factory() as session:
+            cached = await ai_plan_repo.get(session, user_id, _KIND)
+            if cached is not None:
+                try:
+                    return json.loads(cached.data_json)
+                except (json.JSONDecodeError, TypeError):
+                    pass  # битый кэш — перегенерируем
+
+    plan = await ai_service.generate_workout_plan(profile)
     async with async_session_factory() as session:
-        user = await user_repo.get_by_id(session, user_id)
-        if user is None:
-            return None
-
-        profile = {
-            "sex": user.sex, "age": user.age,
-            "height_cm": user.height_cm, "weight_kg": user.weight_kg,
-        }
-        ai_text = await ai_service.generate_workout(profile)
-
-        plan = await workout_repo.create_plan(
-            session, user_id=user.id, title="AI-план (черновик)", raw_ai_response=ai_text,
-        )
-        return {"id": plan.id, "title": plan.title, "raw_ai_response": plan.raw_ai_response}
+        await ai_plan_repo.upsert(session, user_id, _KIND, json.dumps(plan, ensure_ascii=False))
+    return plan
 
 
 async def list_plans(user_id: int) -> list[dict]:
