@@ -24,3 +24,12 @@ async def get_current_user_id(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="bad token")
 
     return user_id
+
+
+async def require_admin(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> bool:
+    """Гард админ-роутеров: пропускает только валидный токен с role=admin."""
+    if credentials is None or not auth_service.is_admin_token(credentials.credentials):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="admin only")
+    return True

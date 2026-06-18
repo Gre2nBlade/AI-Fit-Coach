@@ -153,23 +153,48 @@ function applyAvatar(dataUrl, initial) {
   });
 }
 
+/* Уменьшить картинку перед отправкой: меньше байт = быстрее загрузка/анализ.
+   Сжимает до maxSide по большей стороне, отдаёт JPEG data URL. */
+function downscaleImage(file, maxSide = 1024, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        try {
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch (e) {
+          resolve(reader.result); // на всякий случай — исходник
+        }
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ---------- Аватарка: загрузка ---------- */
 const avatarBox = document.getElementById("profile-avatar");
 const avatarInput = document.getElementById("avatar-input");
 if (avatarBox && avatarInput) {
   avatarBox.addEventListener("click", () => avatarInput.click());
-  avatarInput.addEventListener("change", () => {
+  avatarInput.addEventListener("change", async () => {
     const file = avatarInput.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result;
-      const initial = (PROFILE?.full_name || "С").charAt(0).toUpperCase();
-      applyAvatar(dataUrl, initial);
-      const res = await apiPost("/api/user/profile", { avatar: dataUrl });
-      if (res.ok && PROFILE) PROFILE.avatar = dataUrl;
-    };
-    reader.readAsDataURL(file);
+    const dataUrl = await downscaleImage(file, 512, 0.85);
+    const initial = (PROFILE?.full_name || "С").charAt(0).toUpperCase();
+    applyAvatar(dataUrl, initial);
+    const res = await apiPost("/api/user/profile", { avatar: dataUrl });
+    if (res.ok && PROFILE) PROFILE.avatar = dataUrl;
   });
 }
 
@@ -297,13 +322,11 @@ if (chatImageInput) {
       chatImageInput.value = "";
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      CHAT_IMAGE = reader.result;
+    downscaleImage(file).then((dataUrl) => {
+      CHAT_IMAGE = dataUrl;
       if (chatImageThumb) chatImageThumb.src = CHAT_IMAGE;
       if (chatImagePreview) chatImagePreview.hidden = false;
-    };
-    reader.readAsDataURL(file);
+    });
   });
 }
 
@@ -355,19 +378,27 @@ async function sendChat(text) {
   if (res.ok && res.data && res.data.answer) {
     addMessage(res.data.answer, false);
     renderSuggests(res.data.suggestions);
-    // ИИ мог поменять планы через инструменты — обновим их.
-    if (res.data.plan_updated) await refreshUpdatedPlans(res.data.plan_updated);
+    // ИИ мог запустить ре-генерацию планов (идёт в фоне на бэке) — обновим их,
+    // не блокируя чат (без await).
+    if (res.data.plan_updated && res.data.plan_updated.length) {
+      refreshUpdatedPlans(res.data.plan_updated);
+    }
   } else {
     addMessage(errorText(res.data, "Не удалось получить ответ ИИ."), false);
   }
   chatBusy = false;
 }
 
-// Перезагрузить планы, которые ИИ изменил инструментами.
+// Планы, которые ИИ меняет, генерируются на бэкенде в ФОНЕ (ответ чата приходит
+// сразу). Поэтому подождём, пока ре-генерация завершится, и перезагрузим их.
 async function refreshUpdatedPlans(kinds) {
   const list = Array.isArray(kinds) ? kinds : [kinds];
+  if (!list.length) return;
+  addToast?.("ИИ обновляет твои планы…");
+  await new Promise((r) => setTimeout(r, 4000)); // дать фоновой генерации время
   if (list.includes("workout")) { WORKOUT_PLAN = null; await ensureWorkoutPlan(); }
   if (list.includes("nutrition")) { NUTRITION_PLAN = null; await ensureNutritionPlan(); }
+  addToast?.("Планы обновлены ✅");
 }
 
 if (chatText) {

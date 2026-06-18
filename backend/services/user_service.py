@@ -23,6 +23,10 @@ async def get_profile(user_id: int) -> dict | None:
 
 async def update_profile(user_id: int, **fields) -> dict | None:
     fields = {k: v for k, v in fields.items() if k in EDITABLE_FIELDS}
+    # Имя задаётся пользователем — валидируем на сервере (на случай обхода клиента).
+    if "full_name" in fields and fields["full_name"] is not None:
+        if len((fields["full_name"] or "").strip()) < 2:
+            raise ValueError("Имя должно быть не короче 2 символов.")
     async with async_session_factory() as session:
         user = await user_repo.get_by_id(session, user_id)
         if user is None:

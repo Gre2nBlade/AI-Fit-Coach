@@ -27,7 +27,29 @@ class AIError(Exception):
     """Ошибка вызова AI-провайдера (для понятного ответа клиенту)."""
 
 
-async def _chat(messages: list[dict], model: str | None = None) -> str:
+def _http_error_message(status_code: int, has_image: bool) -> str:
+    """Понятное пользователю сообщение по HTTP-коду от AI-провайдера.
+
+    Частые случаи бесплатных моделей: 402 (нет баланса у провайдера),
+    429 (перегрузка/лимит), 404/400 (модель недоступна/не та).
+    """
+    subj = "Анализ фото" if has_image else "ИИ"
+    if status_code == 402:
+        return f"{subj} временно недоступен: у AI-провайдера исчерпан лимит (баланс). Попробуйте позже."
+    if status_code == 429:
+        return f"{subj} перегружен запросами. Подождите минуту и попробуйте снова."
+    if status_code in (400, 404):
+        return (
+            "Анализ фото сейчас недоступен (модель не отвечает на изображения)."
+            if has_image
+            else "AI-модель недоступна. Попробуйте позже."
+        )
+    return f"{subj}-провайдер вернул ошибку, попробуйте позже."
+
+
+async def _chat(
+    messages: list[dict], model: str | None = None, max_tokens: int | None = None
+) -> str:
     """Низкоуровневый вызов OpenRouter chat completions."""
     if not settings.openrouter_api_key or settings.openrouter_api_key.startswith("PUT_"):
         raise AIError("AI не настроен: задайте OPENROUTER_API_KEY в .env")
@@ -39,6 +61,8 @@ async def _chat(messages: list[dict], model: str | None = None) -> str:
         "Content-Type": "application/json",
     }
     payload = {"model": model, "messages": messages}
+    if max_tokens:
+        payload["max_tokens"] = max_tokens
 
     logger.info("OpenRouter → model=%s image=%s", model, has_image)
     t0 = time.perf_counter()
@@ -62,10 +86,11 @@ async def _chat(messages: list[dict], model: str | None = None) -> str:
             "OpenRouter HTTP %s (%.1fс): %s",
             e.response.status_code, time.perf_counter() - t0, e.response.text[:300],
         )
-        raise AIError("AI-провайдер вернул ошибку, попробуйте позже") from e
+        raise AIError(_http_error_message(e.response.status_code, has_image)) from e
     except (httpx.HTTPError, KeyError, IndexError) as e:
         logger.warning("OpenRouter error (%.1fс): %s", time.perf_counter() - t0, e)
-        raise AIError("Не удалось получить ответ от AI") from e
+        subj = "анализ фото" if has_image else "ответ от AI"
+        raise AIError(f"Не удалось получить {subj}. Попробуйте позже.") from e
 
 
 def _profile_context(profile: dict | None) -> str:
@@ -182,8 +207,9 @@ def parse_directives(text: str) -> tuple[str, list[dict], list[str]]:
 # ============================================================
 
 _CHAT_SYSTEM = (
-    "Ты — персональный ИИ фитнес-тренер AI Fit Coach. Отвечай кратко, по делу, "
-    "дружелюбно и на русском. Помогай ТОЛЬКО с темами фитнеса: тренировки, "
+    "Ты — персональный ИИ фитнес-тренер AI Fit Coach. Отвечай кратко (обычно 2–5 "
+    "предложений или короткий список), по делу, дружелюбно и на русском. "
+    "Помогай ТОЛЬКО с темами фитнеса: тренировки, "
     "упражнения, питание, КБЖУ, восстановление, сон, мотивация, здоровье и форма тела. "
     "Если вопрос НЕ про это (код, программирование, боты, общие знания и т.п.) — "
     "вежливо откажись и верни разговор к фитнесу, ничего лишнего не делай.\n\n"
@@ -231,13 +257,13 @@ async def chat(question: str, profile: dict | None = None, image: str | None = N
             {"role": "system", "content": system},
             {"role": "user", "content": user_content},
         ]
-        raw = await _chat(messages, model=settings.ai_vision_model)
+        raw = await _chat(messages, model=settings.ai_vision_model, max_tokens=settings.ai_max_tokens)
     else:
         messages = [
             {"role": "system", "content": system},
             {"role": "user", "content": question},
         ]
-        raw = await _chat(messages)
+        raw = await _chat(messages, max_tokens=settings.ai_max_tokens)
 
     answer, actions, suggestions = parse_directives(raw)
     if actions:
@@ -294,7 +320,7 @@ async def generate_workout_plan(profile: dict, extra: str | None = None) -> dict
         raw = await _chat([
             {"role": "system", "content": system},
             {"role": "user", "content": user},
-        ])
+        ], max_tokens=settings.ai_plan_max_tokens)
         data = _extract_json(raw)
         groups = data.get("groups") if isinstance(data, dict) else None
         if not groups:
@@ -369,7 +395,7 @@ async def generate_nutrition_plan(profile: dict, extra: str | None = None) -> di
         raw = await _chat([
             {"role": "system", "content": system},
             {"role": "user", "content": user},
-        ])
+        ], max_tokens=settings.ai_plan_max_tokens)
         data = _extract_json(raw)
         meals = data.get("meals") if isinstance(data, dict) else None
         if not meals:

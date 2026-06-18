@@ -36,13 +36,37 @@ def create_access_token(user_id: int) -> str:
 
 
 def decode_token(token: str) -> int | None:
-    """Вернуть user_id из валидного токена или None."""
+    """Вернуть user_id из валидного ПОЛЬЗОВАТЕЛЬСКОГО токена или None.
+
+    Админский токен (role=admin) не считается пользовательским — вернёт None.
+    """
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
     except JWTError:
         return None
+    if payload.get("role") == "admin":
+        return None
     sub = payload.get("sub")
-    return int(sub) if sub is not None else None
+    try:
+        return int(sub) if sub is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def create_admin_token() -> str:
+    """JWT для админ-панели. Отличается от пользовательского claim'ом role=admin."""
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_expire_minutes)
+    payload = {"sub": "admin", "role": "admin", "exp": expire}
+    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+
+
+def is_admin_token(token: str) -> bool:
+    """True, если токен валиден и имеет role=admin."""
+    try:
+        payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
+    except JWTError:
+        return False
+    return payload.get("role") == "admin"
 
 
 async def register(email: str, password: str, full_name: str | None = None) -> dict | None:

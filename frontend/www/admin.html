@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>AI Fit Coach — Админ-панель</title>
+  <script src="js/theme.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-wrap { max-width: 1100px; margin: 0 auto; padding: 28px 18px 60px; }
+    .admin-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:22px; }
+    .admin-table { width:100%; border-collapse:collapse; font-size:14px; }
+    .admin-table th, .admin-table td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--surface-1, #2a2740); }
+    .admin-table th { color:#8d86a3; font-weight:600; }
+    .admin-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .admin-actions { display:flex; gap:8px; flex-wrap:wrap; }
+    .admin-stats { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:14px; margin-bottom:20px; }
+    .admin-log { white-space:pre-wrap; word-break:break-word; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; max-height:60vh; overflow:auto; margin:0; }
+    .admin-bars { display:flex; align-items:flex-end; gap:6px; height:120px; }
+    .admin-bars .b { flex:1; background:var(--accent,#7c5cff); border-radius:6px 6px 0 0; min-height:3px; position:relative; }
+    .admin-bars .b span { position:absolute; bottom:-20px; left:0; right:0; text-align:center; font-size:10px; color:#8d86a3; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:rgba(124,92,255,.18); color:#b9a8ff; }
+    .danger { color:var(--hard,#e3596a); border-color:var(--hard,#e3596a); }
+    .admin-detail { margin-top:14px; }
+    .admin-detail .data-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+    .edit-grid { display:grid; grid-template-columns: repeat(2,1fr); gap:12px; }
+    @media (max-width:640px){ .edit-grid{ grid-template-columns:1fr; } }
+    .admin-login { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .admin-login .panel { width:100%; max-width:380px; }
+    .admin-login .input { width:100%; margin:14px 0; }
+    .admin-login .btn { width:100%; }
+    .login-error { color:var(--hard,#e3596a); font-size:13px; margin-bottom:12px; }
+  </style>
+</head>
+<body>
+  <!-- ===== Экран входа (по умолчанию показан; admin.js переключает) ===== -->
+  <div class="admin-login" id="admin-login" hidden>
+    <form class="panel" id="admin-login-form" autocomplete="off">
+      <h2 class="page-title" style="margin:0 0 4px;">Админ-панель</h2>
+      <div class="page-sub">Введите секретный ключ доступа.</div>
+      <input class="input" id="admin-secret" type="password" placeholder="Секрет" autocomplete="off">
+      <div class="login-error" id="admin-login-error" hidden></div>
+      <button class="btn" type="submit">Войти</button>
+    </form>
+  </div>
+
+  <div class="admin-wrap" hidden>
+    <div class="admin-head">
+      <div>
+        <h1 class="page-title" style="margin:0;">Админ-панель</h1>
+        <div class="page-sub">Управление пользователями, контентом, аналитика и логи</div>
+      </div>
+      <button class="btn btn-ghost danger" id="btn-admin-logout">Выйти</button>
+    </div>
+
+    <div class="tabs" id="admin-tabs">
+      <button class="chip active" data-tab="users">Пользователи</button>
+      <button class="chip" data-tab="analytics">Аналитика</button>
+      <button class="chip" data-tab="logs">Логи</button>
+    </div>
+
+    <!-- ===== Пользователи ===== -->
+    <section class="admin-section" data-tab="users">
+      <div class="panel">
+        <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap;">
+          <input class="input" id="user-search" placeholder="Поиск по email или имени…" style="flex:1; min-width:200px;">
+          <button class="btn" id="btn-user-search">Найти</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="admin-table" id="users-table">
+            <thead><tr><th>ID</th><th>Email</th><th>Имя</th><th>Цель</th><th>Онбординг</th><th></th></tr></thead>
+            <tbody id="users-tbody"><tr><td colspan="6" class="page-sub">Загрузка…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="page-sub" id="users-count" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel admin-detail" id="user-detail" hidden></div>
+    </section>
+
+    <!-- ===== Аналитика ===== -->
+    <section class="admin-section" data-tab="analytics" hidden>
+      <div class="admin-stats" id="stats-tiles"></div>
+      <div class="panel">
+        <h3>Регистрации за 14 дней</h3>
+        <div class="admin-bars" id="reg-bars" style="margin-top:24px;"></div>
+      </div>
+    </section>
+
+    <!-- ===== Логи ===== -->
+    <section class="admin-section" data-tab="logs" hidden>
+      <div class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; flex-wrap:wrap;">
+          <h3 style="margin:0;">logs/app.log (хвост)</h3>
+          <button class="btn btn-ghost" id="btn-logs-refresh">Обновить</button>
+        </div>
+        <pre class="admin-log" id="logs-pre">Загрузка…</pre>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

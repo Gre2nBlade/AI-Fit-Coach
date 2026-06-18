@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     ai_model: str = "openai/gpt-oss-120b:free"
     # Vision-модель — анализ фото в чате (еда, упражнения). Поддерживает изображения.
     ai_vision_model: str = "google/gemma-4-26b-a4b-it:free"
+    # Лимиты длины ответа — короче ответ = быстрее генерация.
+    ai_max_tokens: int = 800          # чат ИИ-тренера
+    ai_plan_max_tokens: int = 1500    # генерация планов (JSON)
 
     # БД
     database_url: str = "sqlite+aiosqlite:///./data/app.db"
@@ -22,6 +25,9 @@ class Settings(BaseSettings):
     jwt_secret: str = "CHANGE_ME_IN_PROD"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7  # неделя
+
+    # Admin — секрет для входа в админ-панель (email=admin, пароль=секрет).
+    admin_secret: str = "CHANGE_ME_ADMIN_SECRET"
 
     # FastAPI
     api_host: str = "0.0.0.0"

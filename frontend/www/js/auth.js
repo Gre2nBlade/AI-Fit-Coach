@@ -50,6 +50,24 @@ async function submit() {
     setMsg("Введите email и пароль.", true);
     return;
   }
+
+  // Вход в админ-панель: email = admin, пароль = секрет (ADMIN_SECRET на бэке).
+  if (email.toLowerCase() === "admin") {
+    submitBtn.disabled = true;
+    const res = await apiPost("/api/admin/login", { secret: password });
+    submitBtn.disabled = false;
+    if (res.ok && res.data && res.data.token) {
+      localStorage.setItem("afc_admin_token", res.data.token);
+      window.location.href = "admin.html";
+    } else {
+      setMsg(errorText(res.data, "Неверный секрет."), true);
+    }
+    return;
+  }
+  if (mode === "register" && name && name.length < 2) {
+    setMsg("Имя должно быть не короче 2 символов.", true);
+    return;
+  }
   if (mode === "register" && password.length < 6) {
     setMsg("Пароль слишком короткий: минимум 6 символов.", true);
     return;

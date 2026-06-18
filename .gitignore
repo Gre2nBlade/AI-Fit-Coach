@@ -6,6 +6,7 @@ __pycache__/
 venv/
 env/
 design/
+docs/
 
 # Env / secrets
 .env

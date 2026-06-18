@@ -20,7 +20,10 @@ async def me(user_id: int = Depends(get_current_user_id)) -> dict:
 @router.post("/profile")
 async def update_profile(payload: dict, user_id: int = Depends(get_current_user_id)) -> dict:
     # Черновик: payload без строгой схемы, сервис фильтрует разрешённые поля.
-    updated = await user_service.update_profile(user_id, **payload)
+    try:
+        updated = await user_service.update_profile(user_id, **payload)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
     if updated is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
     return updated

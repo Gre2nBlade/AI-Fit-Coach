@@ -1,7 +1,7 @@
 """Роутер ИИ-тренера: вопрос → ответ от OpenRouter с учётом профиля."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from backend.api.dependencies import get_current_user_id
@@ -10,28 +10,37 @@ from backend.services import ai_service, nutrition_service, user_service, workou
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 
-async def _run_actions(user_id: int, actions: list[dict]) -> list[str]:
-    """Исполнить действия, запрошенные ИИ. Возвращает список изменённых планов
-    ('workout' / 'nutrition') для обновления на фронте."""
+def _planned_kinds(actions: list[dict]) -> list[str]:
+    """Какие планы ИИ собирается изменить ('workout'/'nutrition'), без выполнения.
+
+    Нужно, чтобы вернуть фронту список планов сразу, а саму (медленную)
+    ре-генерацию выполнить в фоне.
+    """
     updated: list[str] = []
+    for act in actions:
+        name = act.get("name")
+        if name == "regenerate_workout":
+            updated.append("workout")
+        elif name in ("regenerate_nutrition", "nutrition_from_food"):
+            updated.append("nutrition")
+    return list(dict.fromkeys(updated))
+
+
+async def _run_actions(user_id: int, actions: list[dict]) -> None:
+    """Исполнить действия, запрошенные ИИ (ре-генерация планов). Запускается в фоне."""
     for act in actions:
         name = act.get("name")
         arg = (act.get("arg") or "").strip() or None
         try:
             if name == "regenerate_workout":
                 await workout_service.regenerate(user_id, extra=arg)
-                updated.append("workout")
             elif name == "regenerate_nutrition":
                 await nutrition_service.regenerate(user_id, extra=arg)
-                updated.append("nutrition")
             elif name == "nutrition_from_food":
                 extra = f"Составь рацион в основном из этих продуктов: {arg}" if arg else None
                 await nutrition_service.regenerate(user_id, extra=extra)
-                updated.append("nutrition")
         except ai_service.AIError:
             pass  # действие не критично — основной ответ уже есть
-    # убрать дубли, сохранив порядок
-    return list(dict.fromkeys(updated))
 
 
 class AskIn(BaseModel):
@@ -42,7 +51,11 @@ class AskIn(BaseModel):
 
 
 @router.post("/ask")
-async def ask(payload: AskIn, user_id: int = Depends(get_current_user_id)) -> dict:
+async def ask(
+    payload: AskIn,
+    background_tasks: BackgroundTasks,
+    user_id: int = Depends(get_current_user_id),
+) -> dict:
     if not payload.question.strip() and not payload.image:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -54,7 +67,12 @@ async def ask(payload: AskIn, user_id: int = Depends(get_current_user_id)) -> di
     except ai_service.AIError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
 
-    plan_updated = await _run_actions(user_id, result.get("actions") or [])
+    # Ответ возвращаем сразу; медленную ре-генерацию планов делаем в фоне,
+    # а фронту сообщаем, какие планы скоро обновятся (plan_updated).
+    actions = result.get("actions") or []
+    plan_updated = _planned_kinds(actions)
+    if actions:
+        background_tasks.add_task(_run_actions, user_id, actions)
     return {
         "answer": result["answer"],
         "suggestions": result.get("suggestions") or [],

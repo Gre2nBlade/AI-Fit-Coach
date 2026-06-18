@@ -9,6 +9,9 @@ const profile = {
 const steps = Array.from(document.querySelectorAll(".onb-step"));
 const segs = Array.from(document.querySelectorAll("#step-rail .seg"));
 let current = 0;
+// Режим редактирования: пользователь уже прошёл онбординг и зашёл править данные
+// из профиля. В этом режиме на первом шаге показываем кнопку «Назад» (отмена).
+let IS_EDIT = false;
 
 // Если пользователь уже авторизован и есть профиль — предзаполним поля.
 (async function prefill() {
@@ -16,6 +19,11 @@ let current = 0;
   const res = await apiGet("/api/user/me");
   if (res.ok && res.data) {
     const p = res.data;
+    if (p.onboarded) {
+      IS_EDIT = true;
+      const cancel = document.getElementById("btn-cancel-edit");
+      if (cancel) cancel.hidden = false;
+    }
     setVal("f-name", p.full_name); setVal("f-age", p.age); setVal("f-sex", p.sex);
     setVal("f-height", p.height_cm); setVal("f-weight", p.weight_kg);
     setVal("f-goalweight", p.goal_weight_kg);
@@ -63,7 +71,7 @@ function collect() {
 
 function validateStep() {
   if (current === 0) {
-    if (!profile.full_name) return "Введите имя.";
+    if (profile.full_name.trim().length < 2) return "Имя должно быть не короче 2 символов.";
     if (!profile.age || profile.age < 10 || profile.age > 100) return "Укажите корректный возраст.";
     if (!profile.sex) return "Выберите пол.";
   } else if (current === 1) {
@@ -92,6 +100,11 @@ document.querySelectorAll("[data-next]").forEach((btn) =>
 
 document.querySelectorAll("[data-back]").forEach((btn) =>
   btn.addEventListener("click", () => { if (current > 0) { current -= 1; render(); } })
+);
+
+// «Назад» на первом шаге в режиме редактирования — вернуться в приложение без сохранения.
+document.querySelectorAll("[data-cancel]").forEach((btn) =>
+  btn.addEventListener("click", () => { window.location.href = "app.html"; })
 );
 
 document.getElementById("goal-grid").addEventListener("click", (e) => {
