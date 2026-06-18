@@ -74,6 +74,45 @@ cp .env.example .env
 docker compose up --build
 ```
 
+## Запуск с публичным доступом (туннель)
+
+Чтобы приложение в APK работало **с любого Wi-Fi и мобильного интернета**, а не
+только из домашней сети, бэкенд выставляется наружу через **Cloudflare Tunnel**
+(`cloudflared`) — даёт публичный `https`-адрес и работает в РФ.
+
+Подготовка (один раз):
+
+```bash
+# установить cloudflared:
+winget install --id Cloudflare.cloudflared
+# (или https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/)
+# для быстрого туннеля регистрация НЕ нужна.
+```
+
+Запуск бэкенда + туннеля одной командой:
+
+```bash
+# быстрый туннель (адрес случайный, меняется при каждом запуске):
+bash scripts/serve-public.sh
+
+# именованный туннель со своим доменом в Cloudflare (адрес постоянный):
+#   разово: cloudflared tunnel login && cloudflared tunnel create afc
+#           cloudflared tunnel route dns afc afc.example.com
+CF_TUNNEL=afc bash scripts/serve-public.sh
+```
+
+Затем вписать публичный адрес (вида `https://...trycloudflare.com` или свой домен)
+в `frontend/www/js/config.js` (`window.AFC_API_BASE`) **без `/` в конце** и
+пересобрать фронт:
+
+```bash
+cd frontend && npx cap sync android
+```
+
+Проверка: открой `<публичный-адрес>/health` — должно вернуться `{"status":"ok"}`.
+С именованным туннелем (свой домен) адрес вписывается один раз; быстрый туннель
+выдаёт новый адрес после каждого перезапуска.
+
 ## Фронтенд и сборка APK
 
 См. [`frontend/README.md`](frontend/README.md). Кратко:

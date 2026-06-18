@@ -5,9 +5,33 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from backend.api.dependencies import get_current_user_id
-from backend.services import ai_service, user_service
+from backend.services import ai_service, nutrition_service, user_service, workout_service
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
+
+
+async def _run_actions(user_id: int, actions: list[dict]) -> list[str]:
+    """Исполнить действия, запрошенные ИИ. Возвращает список изменённых планов
+    ('workout' / 'nutrition') для обновления на фронте."""
+    updated: list[str] = []
+    for act in actions:
+        name = act.get("name")
+        arg = (act.get("arg") or "").strip() or None
+        try:
+            if name == "regenerate_workout":
+                await workout_service.regenerate(user_id, extra=arg)
+                updated.append("workout")
+            elif name == "regenerate_nutrition":
+                await nutrition_service.regenerate(user_id, extra=arg)
+                updated.append("nutrition")
+            elif name == "nutrition_from_food":
+                extra = f"Составь рацион в основном из этих продуктов: {arg}" if arg else None
+                await nutrition_service.regenerate(user_id, extra=extra)
+                updated.append("nutrition")
+        except ai_service.AIError:
+            pass  # действие не критично — основной ответ уже есть
+    # убрать дубли, сохранив порядок
+    return list(dict.fromkeys(updated))
 
 
 class AskIn(BaseModel):
@@ -26,7 +50,13 @@ async def ask(payload: AskIn, user_id: int = Depends(get_current_user_id)) -> di
         )
     profile = await user_service.get_profile(user_id)
     try:
-        answer = await ai_service.chat(payload.question, profile, image=payload.image)
+        result = await ai_service.chat(payload.question, profile, image=payload.image)
     except ai_service.AIError as e:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(e))
-    return {"answer": answer}
+
+    plan_updated = await _run_actions(user_id, result.get("actions") or [])
+    return {
+        "answer": result["answer"],
+        "suggestions": result.get("suggestions") or [],
+        "plan_updated": plan_updated,
+    }

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>AI Fit Coach</title>
+  <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -12,7 +13,7 @@
     <!-- ===== Сайдбар ===== -->
     <aside class="sidebar">
       <div class="logo">
-        <svg class="logo-mark" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+        <img class="logo-mark" src="assets/logo.png" alt="AI Fit Coach">
         <div class="logo-text"><span class="ai">AI</span> FIT COACH</div>
       </div>
 
@@ -42,7 +43,7 @@
       <section class="view active" data-view="home">
         <div class="page-head">
           <div>
-            <h1 class="page-title">Привет <span id="hello-name">Максим</span></h1>
+            <h1 class="page-title">Привет, <span id="hello-name">Максим</span>!</h1>
             <div class="page-sub">Твоя персональная программа готова</div>
           </div>
         </div>
@@ -165,14 +166,6 @@
         </div>
 
         <div class="panel" style="margin-bottom:24px;">
-          <h3>Отметка дня</h3>
-          <div class="page-sub" style="font-size:14px;margin:-8px 0 8px;">Отмечай каждый день — из этого считается прогресс</div>
-          <div class="setting"><span>Питался правильно</span><div class="toggle" data-checkin="ate_well"></div></div>
-          <div class="setting"><span>Тренировался</span><div class="toggle" data-checkin="trained"></div></div>
-          <div class="setting"><span>Выполнил всё</span><div class="toggle" data-checkin="all_done"></div></div>
-        </div>
-
-        <div class="panel" style="margin-bottom:24px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
             <h3>Тренировки этой недели</h3>
             <span class="chip" id="progress-streak">Серия: 0</span>
@@ -204,29 +197,14 @@
         <div class="panel chat">
           <div class="chat-body" id="chat-body">
             <div class="msg">
-              <svg class="logo-mark" style="width:40px;height:40px;flex:none;" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
+              <img class="logo-mark" style="width:40px;height:40px;flex:none;" src="assets/logo.png" alt="AI Fit Coach">
               <div class="bubble">Привет! Я твой персональный ИИ-тренер. Я проанализировал твои данные и готов помочь! Спроси меня о тренировках, питании, восстановлении или любом другом вопросе о фитнесе.</div>
-            </div>
-            <div class="msg">
-              <svg class="logo-mark" style="width:40px;height:40px;flex:none;" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#d4d4dc"/><path d="M24 30 H76 L50 80 Z" fill="#1b1430"/><path d="M50 30 H78 L64 54 Z" fill="#7b6ef0"/></svg>
-              <div class="bubble">
-                <div class="cap">Вот что я могу для тебя сделать:</div>
-                <ul>
-                  <li>Составить программу тренировок</li>
-                  <li>Рассчитать калории и КБЖУ</li>
-                  <li>Посоветовать спортивное питание</li>
-                  <li>Дать рекомендации по восстановлению</li>
-                  <li>Объяснить технику упражнений</li>
-                </ul>
-              </div>
             </div>
           </div>
 
-          <div class="chat-suggests" id="chat-suggests">
-            <button class="chip">Как похудеть быстрее?</button>
-            <button class="chip">Как набрать мышечную массу?</button>
-            <button class="chip">Сколько нужно спать?</button>
-          </div>
+          <!-- Подсказки появляются ПОД ответом ИИ и зависят от контекста.
+               Управляется тумблером «Советы ИИ» (см. app.js). -->
+          <div class="chat-suggests" id="chat-suggests" hidden></div>
 
           <div id="chat-image-preview" class="chat-image-preview" hidden>
             <img id="chat-image-thumb" alt="фото">
@@ -266,9 +244,13 @@
 
             <div class="panel">
               <h3>Настройки</h3>
-              <div class="setting"><span>Уведомления</span><div class="toggle on" data-toggle></div></div>
-              <div class="setting"><span>Советы ИИ</span><div class="toggle on" data-toggle></div></div>
-              <div class="setting"><span>Таймер и сигналы</span><div class="toggle" data-toggle></div></div>
+              <div class="setting"><span>Светлая тема</span><div class="toggle" data-setting="theme_light"></div></div>
+              <div class="setting"><span>Уведомления</span><div class="toggle" data-setting="notifications"></div></div>
+              <button class="btn btn-ghost" id="btn-test-notif" style="width:100%;margin-top:10px;padding:10px;font-size:14px;">
+                <span class="micon" style="font-size:18px;margin-right:6px;vertical-align:middle;">notifications_active</span>Проверить уведомление
+              </button>
+              <div class="setting"><span>Советы ИИ</span><div class="toggle on" data-setting="ai_tips"></div></div>
+              <div class="setting"><span>Таймер и сигналы</span><div class="toggle on" data-setting="timer_sound"></div></div>
               <button class="btn btn-ghost" id="btn-logout-2" style="width:100%;margin-top:18px;color:var(--hard);border-color:var(--hard);">Выйти из аккаунта</button>
             </div>
           </div>
@@ -306,6 +288,11 @@
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/calc.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/notif-schedule.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/exercise-videos.js"></script>
+  <script src="js/workout-session.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

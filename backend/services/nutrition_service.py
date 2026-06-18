@@ -31,6 +31,17 @@ async def get_plan(user_id: int, force: bool = False) -> dict | None:
     return plan
 
 
+async def regenerate(user_id: int, extra: str | None = None) -> dict | None:
+    """Пересоздать план питания (с опциональным пожеланием) и сохранить."""
+    profile = await user_service.get_profile(user_id)
+    if profile is None:
+        return None
+    plan = await ai_service.generate_nutrition_plan(profile, extra=extra)
+    async with async_session_factory() as session:
+        await ai_plan_repo.upsert(session, user_id, _KIND, json.dumps(plan, ensure_ascii=False))
+    return plan
+
+
 async def add_food(user_id: int, name: str, calories: float | None = None,
                    protein: float | None = None, fat: float | None = None,
                    carbs: float | None = None) -> dict:

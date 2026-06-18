@@ -4,6 +4,7 @@
   "private": true,
   "description": "Веб-app AI Fit Coach + упаковка в APK/iOS через Capacitor (черновик)",
   "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
     "cap:sync": "cap sync",
     "android:add": "cap add android",
     "android:open": "cap open android",
@@ -17,6 +18,7 @@
   "dependencies": {
     "@capacitor/core": "^6.1.0",
     "@capacitor/android": "^6.1.0",
-    "@capacitor/ios": "^6.1.0"
+    "@capacitor/ios": "^6.1.0",
+    "@capacitor/local-notifications": "^6.1.0"
   }
 }

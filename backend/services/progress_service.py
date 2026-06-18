@@ -49,7 +49,7 @@ async def get_summary(user_id: int, today: date | None = None) -> dict:
 
     - week_bars: тренировки по дням текущей недели (Пн..Вс) для столбиков;
     - workouts_month: число тренировок в текущем месяце;
-    - completion_pct: % дней месяца, где выполнено всё;
+    - completion_pct: % дней месяца с реальной тренировкой;
     - streak: текущая серия подряд дней с тренировкой (до сегодня).
     """
     today = today or date.today()
@@ -76,11 +76,9 @@ async def get_summary(user_id: int, today: date | None = None) -> dict:
     workouts_month = sum(
         1 for d, r in by_day.items() if d >= month_start and r.trained
     )
-    days_with_all = sum(
-        1 for d, r in by_day.items() if d >= month_start and r.all_done
-    )
     days_passed = today.day  # сколько дней месяца прошло (включая сегодня)
-    completion_pct = round(days_with_all / days_passed * 100) if days_passed else 0
+    # «Выполнение плана» = доля дней месяца с реальной тренировкой.
+    completion_pct = round(workouts_month / days_passed * 100) if days_passed else 0
 
     # серия подряд тренировок (от сегодня назад)
     streak = 0

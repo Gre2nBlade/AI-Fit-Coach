@@ -37,6 +37,20 @@ function doLogout() {
 document.getElementById("btn-logout").addEventListener("click", doLogout);
 document.getElementById("btn-logout-2")?.addEventListener("click", doLogout);
 
+// Проверка уведомлений: отправить тестовое прямо сейчас.
+document.getElementById("btn-test-notif")?.addEventListener("click", async () => {
+  const ok = await AFCNotifications.test();
+  if (typeof addToast === "function") {
+    if (ok) {
+      addToast(AFCNotifications.isNative()
+        ? "Тестовое уведомление придёт через 5 секунд"
+        : "Уведомление отправлено (в браузере — только пока вкладка открыта)");
+    } else {
+      addToast("Разреши уведомления, чтобы проверить");
+    }
+  }
+});
+
 /* ---------- Загрузка профиля ---------- */
 async function loadProfile() {
   const res = await apiGet("/api/user/me");
@@ -46,6 +60,8 @@ async function loadProfile() {
   if (!res.data.onboarded) { window.location.replace("onboarding.html"); return; }
   PROFILE = res.data;
   fillProfile(PROFILE);
+  // напоминания (тренировка/вода) с учётом дней из профиля
+  if (window.AFCNotifications) AFCNotifications.init(PROFILE);
   // подтянуть план тренировок для главной (тренировка дня)
   ensureWorkoutPlan();
 }
@@ -53,6 +69,21 @@ async function loadProfile() {
 function setText(id, text) {
   const el = document.getElementById(id);
   if (el != null) el.textContent = text;
+}
+
+/* Короткое всплывающее уведомление внизу экрана. */
+function addToast(text) {
+  let box = document.getElementById("afc-toast");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "afc-toast";
+    box.className = "afc-toast";
+    document.body.appendChild(box);
+  }
+  box.textContent = text;
+  box.classList.add("show");
+  clearTimeout(addToast._t);
+  addToast._t = setTimeout(() => box.classList.remove("show"), 3000);
 }
 
 function fillProfile(p) {
@@ -142,10 +173,8 @@ if (avatarBox && avatarInput) {
   });
 }
 
-/* ---------- Переключатели настроек ---------- */
-document.querySelectorAll("[data-toggle]").forEach((t) =>
-  t.addEventListener("click", () => t.classList.toggle("on"))
-);
+/* ---------- Переключатели настроек (тема, уведомления, советы, таймер) ---------- */
+AFCSettings.bindToggles();
 
 /* ---------- Вкладки-чипы (визуальное переключение) ---------- */
 document.querySelectorAll(".tabs").forEach((tabs) => {
@@ -166,7 +195,8 @@ function addMessage(text, mine, image) {
   msg.className = "msg" + (mine ? " me" : "");
   const initial = (PROFILE?.full_name || "Я").charAt(0).toUpperCase();
   const photo = image ? `<img class="chat-photo" src="${image}" alt="фото">` : "";
-  const bubble = `<div class="bubble">${photo}${escapeHtml(text)}</div>`;
+  const body = mine ? escapeHtml(text) : `<div class="md">${renderMarkdown(text)}</div>`;
+  const bubble = `<div class="bubble">${photo}${body}</div>`;
   msg.innerHTML = mine ? `<div class="avatar sm">${initial}</div>${bubble}` : bubble;
   chatBody.appendChild(msg);
   chatBody.scrollTop = chatBody.scrollHeight;
@@ -177,6 +207,70 @@ function escapeHtml(s) {
   const d = document.createElement("div");
   d.textContent = s;
   return d.innerHTML;
+}
+
+/* Лёгкий безопасный Markdown для ответов ИИ: сначала экранируем HTML,
+   затем применяем форматирование к уже безопасному тексту. */
+function inlineMd(s) {
+  return s
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
+function renderMarkdown(text) {
+  const lines = escapeHtml(text || "").replace(/\r\n/g, "\n").split("\n");
+  const out = [];
+  let list = null; // "ul" | "ol"
+  const closeList = () => { if (list) { out.push(`</${list}>`); list = null; } };
+  const isTableSep = (s) => s != null && /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)+\|?\s*$/.test(s);
+  const tableCells = (s) =>
+    s.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map((c) => inlineMd(c.trim()));
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i].trim();
+    if (!line) { closeList(); i++; continue; }
+
+    // Markdown-таблица: строка с «|» и следующая — разделитель (|---|---|)
+    if (line.includes("|") && isTableSep(lines[i + 1])) {
+      closeList();
+      const head = tableCells(line);
+      i += 2;
+      const rows = [];
+      while (i < lines.length && lines[i].trim() && lines[i].includes("|")) {
+        rows.push(tableCells(lines[i].trim()));
+        i++;
+      }
+      let t = "<table><thead><tr>" + head.map((c) => `<th>${c}</th>`).join("") + "</tr></thead>";
+      if (rows.length) {
+        t += "<tbody>" + rows.map((r) => "<tr>" + r.map((c) => `<td>${c}</td>`).join("") + "</tr>").join("") + "</tbody>";
+      }
+      t += "</table>";
+      out.push(`<div class="md-table">${t}</div>`);
+      continue;
+    }
+
+    let m = line.match(/^[-*•]\s+(.*)$/);
+    if (m) {
+      if (list !== "ul") { closeList(); out.push("<ul>"); list = "ul"; }
+      out.push(`<li>${inlineMd(m[1])}</li>`);
+      i++; continue;
+    }
+    m = line.match(/^\d+[.)]\s+(.*)$/);
+    if (m) {
+      if (list !== "ol") { closeList(); out.push("<ol>"); list = "ol"; }
+      out.push(`<li>${inlineMd(m[1])}</li>`);
+      i++; continue;
+    }
+    m = line.match(/^#{1,4}\s+(.*)$/);
+    if (m) { closeList(); out.push(`<div class="md-h">${inlineMd(m[1])}</div>`); i++; continue; }
+    closeList();
+    out.push(`<p>${inlineMd(line)}</p>`);
+    i++;
+  }
+  closeList();
+  return out.join("");
 }
 
 /* фото-вложение в чат */
@@ -213,12 +307,42 @@ if (chatImageInput) {
   });
 }
 
+/* Контекстные подсказки — показываем ТОЛЬКО под последним ответом ИИ и только
+   если включён тумблер «Советы ИИ». Список приходит с бэкенда (suggestions). */
+const chatSuggests = document.getElementById("chat-suggests");
+
+function clearSuggests() {
+  if (!chatSuggests) return;
+  chatSuggests.innerHTML = "";
+  chatSuggests.hidden = true;
+}
+
+function renderSuggests(list) {
+  if (!chatSuggests) return;
+  if (!AFCSettings.get("ai_tips") || !Array.isArray(list) || !list.length) {
+    clearSuggests();
+    return;
+  }
+  chatSuggests.innerHTML = list
+    .slice(0, 3)
+    .map((s) => `<button class="chip" type="button">${escapeHtml(s)}</button>`)
+    .join("");
+  chatSuggests.hidden = false;
+  chatSuggests.querySelectorAll(".chip").forEach((chip) =>
+    chip.addEventListener("click", () => sendChat(chip.textContent))
+  );
+}
+
+// Если «Советы ИИ» выключили на лету — спрятать подсказки сразу.
+AFCSettings.onChange("ai_tips", (on) => { if (!on) clearSuggests(); });
+
 let chatBusy = false;
 async function sendChat(text) {
   text = (text || "").trim();
   const image = CHAT_IMAGE;
   if ((!text && !image) || chatBusy) return;
   chatBusy = true;
+  clearSuggests();
 
   addMessage(text || "Оцени, что на фото", true, image);
   chatText.value = "";
@@ -230,18 +354,25 @@ async function sendChat(text) {
 
   if (res.ok && res.data && res.data.answer) {
     addMessage(res.data.answer, false);
+    renderSuggests(res.data.suggestions);
+    // ИИ мог поменять планы через инструменты — обновим их.
+    if (res.data.plan_updated) await refreshUpdatedPlans(res.data.plan_updated);
   } else {
     addMessage(errorText(res.data, "Не удалось получить ответ ИИ."), false);
   }
   chatBusy = false;
 }
 
+// Перезагрузить планы, которые ИИ изменил инструментами.
+async function refreshUpdatedPlans(kinds) {
+  const list = Array.isArray(kinds) ? kinds : [kinds];
+  if (list.includes("workout")) { WORKOUT_PLAN = null; await ensureWorkoutPlan(); }
+  if (list.includes("nutrition")) { NUTRITION_PLAN = null; await ensureNutritionPlan(); }
+}
+
 if (chatText) {
   document.getElementById("chat-send").addEventListener("click", () => sendChat(chatText.value));
   chatText.addEventListener("keydown", (e) => { if (e.key === "Enter") sendChat(chatText.value); });
-  document.querySelectorAll("#chat-suggests .chip").forEach((chip) =>
-    chip.addEventListener("click", () => sendChat(chip.textContent))
-  );
 }
 
 /* ============================================================
@@ -262,9 +393,12 @@ function exerciseRows(exercises, withDiff) {
     const meta = `${ex.sets ?? "—"}x${ex.reps ?? "—"}${ex.rest ? " · Отдых " + ex.rest : ""}`;
     const d = DIFF[(ex.difficulty || "").toLowerCase()];
     const diffHtml = withDiff && d ? `<div class="diff ${d.cls}">${d.label}</div>` : "";
+    const videoHtml = withDiff
+      ? `<a class="ex-video" href="${AFCVideos.urlFor(ex)}" target="_blank" rel="noopener" title="Видео упражнения"><span class="micon">play_circle</span></a>`
+      : "";
     return `<div class="ex-row"><div class="num">${i + 1}</div>` +
       `<div class="info"><div class="nm">${escapeHtml(ex.name || "Упражнение")}</div>` +
-      `<div class="meta">${escapeHtml(meta)}</div></div>${diffHtml}</div>`;
+      `<div class="meta">${escapeHtml(meta)}</div></div>${diffHtml}${videoHtml}</div>`;
   }).join("");
 }
 
@@ -281,8 +415,13 @@ function renderWorkoutGroup(idx) {
   const count = (g.exercises || []).length;
   content.innerHTML =
     `<div class="panel">
-       <h3 style="font-size:24px;">${escapeHtml(g.title || g.group || "Тренировка")}</h3>
-       <div class="page-sub" style="font-size:14px;margin:6px 0 18px;">${g.minutes || "—"} минут · ${g.calories || "—"} калорий · ${count} упражнений</div>
+       <div style="text-align:center;">
+         <h3 style="font-size:24px;margin-bottom:14px;">${escapeHtml(g.title || g.group || "Тренировка")}</h3>
+         <button class="btn" id="btn-start-workout" style="padding:10px 24px;font-size:15px;">
+           <span class="micon" style="font-size:18px;margin-right:6px;vertical-align:middle;">play_arrow</span>Начать
+         </button>
+       </div>
+       <div class="page-sub" style="font-size:14px;margin:14px 0 18px;text-align:center;">${g.minutes || "—"} минут · ${g.calories || "—"} калорий · ${count} упражнений</div>
        <div class="ex-list">${exerciseRows(g.exercises, true)}</div>
      </div>
      <div class="stack">
@@ -297,6 +436,14 @@ function renderWorkoutGroup(idx) {
          <p class="page-sub" style="font-size:15px;margin:0;">Соблюдай технику и отдых между подходами. Когда выполняешь все повторения легко — повышай нагрузку.</p>
        </div>
      </div>`;
+
+  document.getElementById("btn-start-workout")?.addEventListener("click", () => {
+    AFCWorkout.start(g, () => {
+      addToast?.("Тренировка засчитана! 💪");
+      PROGRESS_LOADED = false;
+      ensureProgress(true);
+    });
+  });
 }
 
 function renderWorkoutPlan() {
@@ -389,12 +536,6 @@ function renderProgress(s) {
   setText("st-completion", (s.completion_pct ?? 0) + "%");
   setText("st-streak", s.streak ?? 0);
   setText("progress-streak", "Серия: " + (s.streak ?? 0));
-
-  // тумблеры чек-ина
-  const t = s.today || {};
-  document.querySelectorAll("[data-checkin]").forEach((el) => {
-    el.classList.toggle("on", !!t[el.dataset.checkin]);
-  });
 }
 
 async function ensureProgress(force) {
@@ -405,18 +546,5 @@ async function ensureProgress(force) {
     renderProgress(res.data);
   }
 }
-
-// клики по тумблерам чек-ина → сохранить день
-document.querySelectorAll("[data-checkin]").forEach((el) => {
-  el.addEventListener("click", async () => {
-    el.classList.toggle("on");
-    const payload = {};
-    document.querySelectorAll("[data-checkin]").forEach((t) => {
-      payload[t.dataset.checkin] = t.classList.contains("on");
-    });
-    const res = await apiPost("/api/progress/checkin", payload);
-    if (res.ok) ensureProgress(true);  // обновить графики/серии
-  });
-});
 
 loadProfile();
